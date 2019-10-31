@@ -1,63 +1,100 @@
 package com.android.lib;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.app.Activity;
+
+import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 
 import java.lang.ref.WeakReference;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 通知调度器
  */
-public class NoticeDispatcher implements LifecycleObserver {
+class NoticeDispatcher implements LifecycleObserver {
 
-    private WeakReference<AppCompatActivity> mActivityRef;
-    private final NoticeReceiver mReceiver;
-    private final INoticeRegistry mNoticeRegistry;
+    private final List<String> mReceiverTags;
+    private INoticeReceiver mReceiver;
 
-    public NoticeDispatcher(AppCompatActivity activity, NoticeReceiver receiver, INoticeRegistry registry) {
-        if (activity != null) {
-            activity.getLifecycle().addObserver(this);
+    private WeakReference<Activity> mCurrentActivityRef;
+
+    public NoticeDispatcher() {
+        this.mReceiverTags = new LinkedList<>();
+        this.mReceiver = new NoticeReceiverImpl();
+    }
+
+    public void addNoticeReceiver(@NonNull Activity activity) {
+        if (activity != null && activity instanceof LifecycleOwner) {
+            ((LifecycleOwner) activity).getLifecycle().addObserver(this);
         }
-        this.mActivityRef = new WeakReference<>(activity);
-        this.mReceiver = receiver;
-        this.mNoticeRegistry = registry;
 
-        this.mNoticeRegistry.register(activity);
+        final String tag = activity.getClass().getName();
+        if (!mReceiverTags.contains(tag)) {
+            mReceiverTags.add(tag);
+        }
+    }
+
+    public void removeNoticeReceiver(@NonNull Activity activity) {
+        if (activity != null && activity instanceof LifecycleOwner) {
+            ((LifecycleOwner) activity).getLifecycle().removeObserver(this);
+        }
+
+        final String tag = activity.getClass().getName();
+        if (mReceiverTags.contains(tag)) {
+            mReceiverTags.remove(tag);
+        }
+    }
+
+    public void setReceiverVisibility(@NonNull Activity activity, boolean visible) {
+        if (visible) {
+            mCurrentActivityRef = new WeakReference<>(activity);
+        } else {
+            mCurrentActivityRef.clear();
+        }
     }
 
     public void dispatch(INotice notice) {
-        if (null == notice || null == mActivityRef || null == mActivityRef.get() || null == mReceiver) {
+        if (null == notice || null == mReceiver) {
             return;
         }
 
-        mReceiver.accept(mActivityRef.get(), notice);
+        mReceiver.accept(mCurrentActivityRef.get(), notice);
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    void onResume() {
-    }
+    public void onResume(@NonNull LifecycleOwner owner) {
+        if (null == owner) {
+            return;
+        }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    void onStart() {
+        if (owner instanceof Activity) {
+            setReceiverVisibility((Activity) owner, true);
+        }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    void onPause() {
-    }
+    public void onPause(@NonNull LifecycleOwner owner) {
+        if (null == owner) {
+            return;
+        }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    void onStop() {
+        if (owner instanceof Activity) {
+            setReceiverVisibility((Activity) owner, false);
+        }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    void onDestroy() {
-        if (mActivityRef != null && mActivityRef.get() != null) {
-            mActivityRef.get().getLifecycle().removeObserver(this);
-            if (mNoticeRegistry != null) {
-                mNoticeRegistry.unregister(mActivityRef.get());
-            }
+    public void onDestroy(@NonNull LifecycleOwner owner) {
+        if (mReceiver != null) {
+            mReceiver.refuse();
+        }
+
+        if (owner != null && owner instanceof Activity) {
+            removeNoticeReceiver((Activity) owner);
         }
     }
 }

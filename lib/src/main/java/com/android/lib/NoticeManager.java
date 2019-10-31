@@ -1,26 +1,49 @@
 package com.android.lib;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.app.Activity;
 
 public class NoticeManager implements INoticeRegistry {
 
-    private final List<INoticeView> mNoticeList = new ArrayList<>();
+    private static volatile NoticeManager sInstance;
+    private final NoticeDispatcher mDispatcher;
 
-    @Override
-    public void register(AppCompatActivity activity) {
+    public static NoticeManager getInstance() {
+        if (null == sInstance) {
+            synchronized (NoticeManager.class) {
+                if (null == sInstance) {
+                    sInstance = new NoticeManager();
+                }
+            }
+        }
 
+        return sInstance;
+    }
+
+    private NoticeManager() {
+        mDispatcher = new NoticeDispatcher();
     }
 
     @Override
-    public void unregister(AppCompatActivity activity) {
-
+    public void register(Activity activity) {
+        mDispatcher.addNoticeReceiver(activity);
     }
 
-    public void dispatch(INotice notice) {
-        NoticeDispatcher dispatcher = new NoticeDispatcher();
-        dispatcher.dispatch(notice);
+    @Override
+    public void unregister(Activity activity) {
+        mDispatcher.removeNoticeReceiver(activity);
+    }
+
+    @Override
+    public void resume(Activity activity) {
+        mDispatcher.setReceiverVisibility(activity, true);
+    }
+
+    @Override
+    public void pause(Activity activity) {
+        mDispatcher.setReceiverVisibility(activity, false);
+    }
+
+    public void send(INotice notice) {
+        mDispatcher.dispatch(notice);
     }
 }

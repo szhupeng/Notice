@@ -1,12 +1,35 @@
 package com.android.lib;
 
-public interface INotice extends INoticeView {
+import android.view.View;
+
+import androidx.annotation.IdRes;
+
+public interface INotice<T> {
     /** 获取图标链接 */
     String getIconUrl();
 
+    /** 获取图标资源 */
+    @IdRes
+    int getIconResId();
+
     /** 获取标题 */
-    CharSequence getTitle();
+    String getTitle();
 
     /** 获取内容 */
-    CharSequence getContent();
+    String getContent();
+
+    /** 获取站内信通知自定义视图 */
+    INoticeView getNoticeView();
+
+    /** 获取站内通知视图监听 */
+    NoticeViewListener getNoticeViewListener();
+
+    /** 获取站内信通知停留时间（毫秒） */
+    long getResidenceTime();
+
+    T getExtendedData();
+
+    interface NoticeViewListener {
+        void onViewCreated(View view, INotice notice);
+    }
 }

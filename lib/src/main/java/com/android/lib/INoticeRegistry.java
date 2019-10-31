@@ -1,10 +1,14 @@
 package com.android.lib;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.app.Activity;
 
-public interface INoticeRegistry {
+interface INoticeRegistry {
 
-    void register(AppCompatActivity activity);
+    void register(Activity activity);
 
-    void unregister(AppCompatActivity activity);
+    void unregister(Activity activity);
+
+    void resume(Activity activity);
+
+    void pause(Activity activity);
 }
