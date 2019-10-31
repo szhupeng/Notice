@@ -2,14 +2,11 @@ package com.android.lib;
 
 import android.view.View;
 
-import androidx.annotation.IdRes;
-
 public interface INotice<T> {
     /** 获取图标链接 */
     String getIconUrl();
 
     /** 获取图标资源 */
-    @IdRes
     int getIconResId();
 
     /** 获取标题 */

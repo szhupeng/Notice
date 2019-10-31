@@ -9,43 +9,24 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 
 import java.lang.ref.WeakReference;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * 通知调度器
  */
 class NoticeDispatcher implements LifecycleObserver {
 
-    private final List<String> mReceiverTags;
     private INoticeReceiver mReceiver;
-
     private WeakReference<Activity> mCurrentActivityRef;
-
-    public NoticeDispatcher() {
-        this.mReceiverTags = new LinkedList<>();
-        this.mReceiver = new NoticeReceiverImpl();
-    }
 
     public void addNoticeReceiver(@NonNull Activity activity) {
         if (activity != null && activity instanceof LifecycleOwner) {
             ((LifecycleOwner) activity).getLifecycle().addObserver(this);
-        }
-
-        final String tag = activity.getClass().getName();
-        if (!mReceiverTags.contains(tag)) {
-            mReceiverTags.add(tag);
         }
     }
 
     public void removeNoticeReceiver(@NonNull Activity activity) {
         if (activity != null && activity instanceof LifecycleOwner) {
             ((LifecycleOwner) activity).getLifecycle().removeObserver(this);
-        }
-
-        final String tag = activity.getClass().getName();
-        if (mReceiverTags.contains(tag)) {
-            mReceiverTags.remove(tag);
         }
     }
 
@@ -57,12 +38,18 @@ class NoticeDispatcher implements LifecycleObserver {
         }
     }
 
-    public void dispatch(INotice notice) {
-        if (null == notice || null == mReceiver) {
+    public void dispatch(final INotice notice, final ReceiverFactory factory) {
+        if (null == mCurrentActivityRef || null == mCurrentActivityRef.get()) {
             return;
         }
 
-        mReceiver.accept(mCurrentActivityRef.get(), notice);
+        if (factory != null) {
+            mReceiver = factory.create();
+        }
+
+        if (mReceiver != null) {
+            mReceiver.accept(mCurrentActivityRef.get(), notice);
+        }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)

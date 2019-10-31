@@ -44,6 +44,10 @@ public class NoticeManager implements INoticeRegistry {
     }
 
     public void send(INotice notice) {
-        mDispatcher.dispatch(notice);
+        send(notice, new NoticeReceiverFactory());
+    }
+
+    public void send(INotice notice, ReceiverFactory factory) {
+        mDispatcher.dispatch(notice, factory);
     }
 }

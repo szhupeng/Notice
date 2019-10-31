@@ -1,7 +1,5 @@
 package com.android.lib;
 
-import androidx.annotation.IdRes;
-
 class NoticeInfo implements INotice {
 
     private String mTitle;
@@ -55,7 +53,7 @@ class NoticeInfo implements INotice {
         this.mIconUrl = iconUrl;
     }
 
-    public void setIconResId(@IdRes int iconResId) {
+    public void setIconResId(int iconResId) {
         this.mIconResId = iconResId;
     }
 
