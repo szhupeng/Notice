@@ -6,7 +6,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 
-class WindowNoticeReceiverImpl implements INoticeReceiver {
+class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
     @Override
     public void accept(Activity activity, INotice notice) {

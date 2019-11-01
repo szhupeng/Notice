@@ -15,7 +15,7 @@ import java.lang.ref.WeakReference;
  */
 class NoticeDispatcher implements LifecycleObserver {
 
-    private INoticeReceiver mReceiver;
+    private AbstractNoticeReceiver mReceiver;
     private WeakReference<Activity> mCurrentActivityRef;
 
     public void addNoticeReceiver(@NonNull Activity activity) {

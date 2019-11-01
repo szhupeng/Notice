@@ -4,42 +4,24 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.content.res.Resources;
 import android.os.Build;
 import android.text.Html;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.LinkedList;
-import java.util.List;
-
-class NoticeReceiverImpl implements INoticeReceiver {
-
-    private final int mScreenWidth, mScreenHeight;
+class NoticeReceiverImpl extends AbstractNoticeReceiver {
 
     private final ObjectAnimator mShowAnim;
     private final ObjectAnimator mHideAnim;
 
     private long mResidenceTime;
 
-    private final SparseArray<View> mNoticeViews;
-
-    private final List<INotice> mCachedNotices;
-
     public NoticeReceiverImpl() {
-        mNoticeViews = new SparseArray<>(1);
-        mCachedNotices = new LinkedList<>();
-
-        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
-        mScreenWidth = metrics.widthPixels;
-        mScreenHeight = metrics.heightPixels;
-
+        super();
         mShowAnim = new ObjectAnimator();
         mShowAnim.setPropertyName("translationY");
         mShowAnim.setDuration(500);

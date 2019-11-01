@@ -2,7 +2,7 @@ package com.android.lib;
 
 public class NoticeReceiverFactory implements ReceiverFactory {
     @Override
-    public INoticeReceiver create() {
+    public AbstractNoticeReceiver create() {
         return new NoticeReceiverImpl();
     }
 }
