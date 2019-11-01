@@ -9,6 +9,7 @@ import android.os.Build;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +25,7 @@ class NoticeReceiverImpl implements INoticeReceiver {
 
     private long mResidenceTime;
 
-    private View mNoticeView;
+    private SparseArray<View> mNoticeViews = new SparseArray<>(1);
 
     @Override
     public void accept(Activity activity, INotice notice) {
@@ -38,84 +39,81 @@ class NoticeReceiverImpl implements INoticeReceiver {
         mResidenceTime = notice.getResidenceTime();
 
         if (notice.getNoticeView() != null) {
-            mNoticeView = notice.getNoticeView().getView(activity, notice);
-            if (mNoticeView != null) {
-                mNoticeView.setVisibility(View.GONE);
-                activity.addContentView(mNoticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            final int viewType = notice.getNoticeView().getViewType(notice);
+            final View noticeView = notice.getNoticeView().createView(activity, notice, viewType);
+            if (noticeView != null) {
+                noticeView.setVisibility(View.GONE);
+                activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 if (notice.getNoticeViewListener() != null) {
-                    notice.getNoticeViewListener().onViewCreated(mNoticeView, notice);
+                    notice.getNoticeViewListener().onViewCreated(noticeView, notice);
                 }
 
-                showNoticeView();
+                if (mNoticeViews.indexOfKey(viewType) < 0) {
+                    mNoticeViews.put(viewType, noticeView);
+                }
+
+                showNoticeView(noticeView);
             } else {
-                createDefaultLayout(activity, notice);
+                createDefaultView(activity, notice);
             }
         } else {
-            createDefaultLayout(activity, notice);
+            createDefaultView(activity, notice);
         }
     }
 
-    private void createDefaultLayout(Activity activity, INotice notice) {
-        mNoticeView = LayoutInflater.from(activity).inflate(R.layout.layout_notice_view, null, false);
-        TextView title = mNoticeView.findViewById(R.id.tv_notice_title);
+    private void createDefaultView(Activity activity, INotice notice) {
+        View noticeView = LayoutInflater.from(activity).inflate(R.layout.layout_notice_view, null, false);
+        TextView title = noticeView.findViewById(R.id.tv_notice_title);
         setText(title, notice.getTitle());
-        TextView content = mNoticeView.findViewById(R.id.tv_notice_content);
+        TextView content = noticeView.findViewById(R.id.tv_notice_content);
         setText(content, notice.getContent());
-        ImageView imageView = mNoticeView.findViewById(R.id.iv_notice_icon);
+        ImageView imageView = noticeView.findViewById(R.id.iv_notice_icon);
         imageView.setImageResource(activity.getApplicationInfo().icon);
-        mNoticeView.setVisibility(View.GONE);
-        activity.addContentView(mNoticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        noticeView.setVisibility(View.GONE);
+        activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         if (notice.getNoticeViewListener() != null) {
-            notice.getNoticeViewListener().onViewCreated(mNoticeView, notice);
+            notice.getNoticeViewListener().onViewCreated(noticeView, notice);
         }
 
-        showNoticeView();
+        if (mNoticeViews.indexOfKey(0) < 0) {
+            mNoticeViews.put(0, noticeView);
+        }
+
+        showNoticeView(noticeView);
     }
 
-    public void setText(TextView textView, String text) {
-        if (null == textView || TextUtils.isEmpty(text)) {
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
-            textView.setText(Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY));
-        } else {
-            textView.setText(Html.fromHtml(text));
-        }
-    }
-
-    void showNoticeView() {
-        mNoticeView.measure(View.MeasureSpec.makeMeasureSpec(mScreenWidth, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(mScreenHeight, View.MeasureSpec.UNSPECIFIED));
-        final int height = mNoticeView.getMeasuredHeight();
-        mShowAnim = ObjectAnimator.ofFloat(mNoticeView, "translationY", -height, 0);
+    void showNoticeView(final View view) {
+        view.measure(View.MeasureSpec.makeMeasureSpec(mScreenWidth, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(mScreenHeight, View.MeasureSpec.UNSPECIFIED));
+        final int height = view.getMeasuredHeight();
+        mShowAnim = ObjectAnimator.ofFloat(view, "translationY", -height, 0);
         mShowAnim.setDuration(500);
         mShowAnim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
-                if (mNoticeView != null) {
-                    mNoticeView.setVisibility(View.VISIBLE);
+                if (view != null) {
+                    view.setVisibility(View.VISIBLE);
                 }
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                hideNoticeView();
+                hideNoticeView(view);
             }
         });
         mShowAnim.start();
     }
 
-    void hideNoticeView() {
-        final int height = mNoticeView.getMeasuredHeight();
-        mHideAnim = ObjectAnimator.ofFloat(mNoticeView, "translationY", 0, -height);
+    void hideNoticeView(final View view) {
+        final int height = view.getMeasuredHeight();
+        mHideAnim = ObjectAnimator.ofFloat(view, "translationY", 0, -height);
         mHideAnim.setDuration(300);
         mHideAnim.setStartDelay(mResidenceTime);
         mHideAnim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (mNoticeView != null && mNoticeView.getParent() != null) {
-                    ((ViewGroup) mNoticeView.getParent()).removeView(mNoticeView);
+                if (view != null && view.getParent() != null) {
+                    ((ViewGroup) view.getParent()).removeView(view);
                 }
             }
         });
@@ -130,6 +128,18 @@ class NoticeReceiverImpl implements INoticeReceiver {
 
         if (mHideAnim != null && mHideAnim.isStarted()) {
             mHideAnim.cancel();
+        }
+    }
+
+    protected void setText(TextView textView, String text) {
+        if (null == textView || TextUtils.isEmpty(text)) {
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+            textView.setText(Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY));
+        } else {
+            textView.setText(Html.fromHtml(text));
         }
     }
 }
