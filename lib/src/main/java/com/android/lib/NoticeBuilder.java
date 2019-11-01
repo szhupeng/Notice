@@ -12,6 +12,7 @@ public class NoticeBuilder {
     protected TimeUnit mTimeUnit;
     protected INotice.NoticeViewListener mNoticeViewListener;
     protected boolean mRecycleData;
+    protected int mPriority;
 
     public NoticeBuilder setTitle(String title) {
         this.mTitle = title;
@@ -50,6 +51,11 @@ public class NoticeBuilder {
         return this;
     }
 
+    public NoticeBuilder setPriority(int priority) {
+        this.mPriority = priority;
+        return this;
+    }
+
     public INotice build() {
         NoticeInfo info = new NoticeInfo();
         info.setIconUrl(mIconUrl);
@@ -61,6 +67,7 @@ public class NoticeBuilder {
             info.setResidenceTime(mTimeUnit.toMillis(mResidenceTime));
         }
         info.setNoticeViewListener(mNoticeViewListener);
+        info.setPriority(mPriority);
         return info;
     }
 }

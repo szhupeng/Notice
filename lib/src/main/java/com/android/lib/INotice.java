@@ -24,7 +24,16 @@ public interface INotice<T> {
     /** 获取站内信通知停留时间（毫秒） */
     long getResidenceTime();
 
+    /** 扩展数据 */
     T getExtendedData();
+
+    /**
+     * 获取视图展示优先级
+     * 多种视图类型：
+     * 优先级相同则顺序展示
+     * 优先级高的先展示
+     */
+    int getPriority();
 
     interface NoticeViewListener {
         void onViewCreated(View view, INotice notice);

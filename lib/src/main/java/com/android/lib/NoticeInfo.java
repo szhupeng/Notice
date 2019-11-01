@@ -8,6 +8,7 @@ class NoticeInfo implements INotice {
     private String mContent;
     private INoticeView mNoticeView;
     private long mResidenceTime;
+    private int mPriority;
     private NoticeViewListener mNoticeViewListener;
 
     @Override
@@ -45,6 +46,16 @@ class NoticeInfo implements INotice {
         return mNoticeViewListener;
     }
 
+    @Override
+    public Object getExtendedData() {
+        return null;
+    }
+
+    @Override
+    public int getPriority() {
+        return mPriority;
+    }
+
     public void setTitle(String title) {
         this.mTitle = title;
     }
@@ -73,8 +84,7 @@ class NoticeInfo implements INotice {
         this.mNoticeViewListener = listener;
     }
 
-    @Override
-    public Object getExtendedData() {
-        return null;
+    public void setPriority(int priority) {
+        this.mPriority = priority;
     }
 }
