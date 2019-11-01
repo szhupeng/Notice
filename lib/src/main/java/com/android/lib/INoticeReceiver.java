@@ -5,5 +5,5 @@ import android.app.Activity;
 public interface INoticeReceiver {
     void accept(Activity activity, INotice notice);
 
-    void refuse();
+    void refuse(Activity activity);
 }

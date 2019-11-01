@@ -25,6 +25,10 @@ class NoticeDispatcher implements LifecycleObserver {
     }
 
     public void removeNoticeReceiver(@NonNull Activity activity) {
+        if (mReceiver != null) {
+            mReceiver.refuse(activity);
+        }
+
         if (activity != null && activity instanceof LifecycleOwner) {
             ((LifecycleOwner) activity).getLifecycle().removeObserver(this);
         }
@@ -54,32 +58,20 @@ class NoticeDispatcher implements LifecycleObserver {
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     public void onResume(@NonNull LifecycleOwner owner) {
-        if (null == owner) {
-            return;
-        }
-
-        if (owner instanceof Activity) {
+        if (owner != null && owner instanceof Activity) {
             setReceiverVisibility((Activity) owner, true);
         }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     public void onPause(@NonNull LifecycleOwner owner) {
-        if (null == owner) {
-            return;
-        }
-
-        if (owner instanceof Activity) {
+        if (owner != null && owner instanceof Activity) {
             setReceiverVisibility((Activity) owner, false);
         }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     public void onDestroy(@NonNull LifecycleOwner owner) {
-        if (mReceiver != null) {
-            mReceiver.refuse();
-        }
-
         if (owner != null && owner instanceof Activity) {
             removeNoticeReceiver((Activity) owner);
         }

@@ -16,16 +16,38 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.LinkedList;
+import java.util.List;
+
 class NoticeReceiverImpl implements INoticeReceiver {
 
-    private int mScreenWidth, mScreenHeight;
+    private final int mScreenWidth, mScreenHeight;
 
-    private ObjectAnimator mShowAnim;
-    private ObjectAnimator mHideAnim;
+    private final ObjectAnimator mShowAnim;
+    private final ObjectAnimator mHideAnim;
 
     private long mResidenceTime;
 
-    private SparseArray<View> mNoticeViews = new SparseArray<>(1);
+    private final SparseArray<View> mNoticeViews;
+
+    private final List<INotice> mCachedNotices;
+
+    public NoticeReceiverImpl() {
+        mNoticeViews = new SparseArray<>(1);
+        mCachedNotices = new LinkedList<>();
+
+        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
+        mScreenWidth = metrics.widthPixels;
+        mScreenHeight = metrics.heightPixels;
+
+        mShowAnim = new ObjectAnimator();
+        mShowAnim.setPropertyName("translationY");
+        mShowAnim.setDuration(500);
+
+        mHideAnim = new ObjectAnimator();
+        mHideAnim.setPropertyName("translationY");
+        mHideAnim.setDuration(300);
+    }
 
     @Override
     public void accept(Activity activity, INotice notice) {
@@ -33,28 +55,32 @@ class NoticeReceiverImpl implements INoticeReceiver {
             return;
         }
 
-        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
-        mScreenWidth = metrics.widthPixels;
-        mScreenHeight = metrics.heightPixels;
         mResidenceTime = notice.getResidenceTime();
 
         if (notice.getNoticeView() != null) {
             final int viewType = notice.getNoticeView().getViewType(notice);
-            final View noticeView = notice.getNoticeView().createView(activity, notice, viewType);
-            if (noticeView != null) {
-                noticeView.setVisibility(View.GONE);
-                activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                if (notice.getNoticeViewListener() != null) {
-                    notice.getNoticeViewListener().onViewCreated(noticeView, notice);
-                }
+            if (mNoticeViews.indexOfKey(viewType) < 0) {
+                final View noticeView = notice.getNoticeView().createView(activity, notice, viewType);
+                if (noticeView != null) {
+                    noticeView.setVisibility(View.GONE);
+                    activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    if (notice.getNoticeViewListener() != null) {
+                        notice.getNoticeViewListener().onViewCreated(noticeView, notice);
+                    }
 
-                if (mNoticeViews.indexOfKey(viewType) < 0) {
                     mNoticeViews.put(viewType, noticeView);
-                }
 
-                showNoticeView(noticeView);
+                    showNoticeView(noticeView);
+                } else {
+                    createDefaultView(activity, notice);
+                }
+            } else if (mNoticeViews.get(viewType).getVisibility() == View.GONE) {
+                mNoticeViews.get(viewType).setVisibility(View.VISIBLE);
+                if (notice.getNoticeViewListener() != null) {
+                    notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(viewType), notice);
+                }
             } else {
-                createDefaultView(activity, notice);
+                mCachedNotices.add(notice);
             }
         } else {
             createDefaultView(activity, notice);
@@ -62,32 +88,44 @@ class NoticeReceiverImpl implements INoticeReceiver {
     }
 
     private void createDefaultView(Activity activity, INotice notice) {
-        View noticeView = LayoutInflater.from(activity).inflate(R.layout.layout_notice_view, null, false);
-        TextView title = noticeView.findViewById(R.id.tv_notice_title);
-        setText(title, notice.getTitle());
-        TextView content = noticeView.findViewById(R.id.tv_notice_content);
-        setText(content, notice.getContent());
-        ImageView imageView = noticeView.findViewById(R.id.iv_notice_icon);
-        imageView.setImageResource(activity.getApplicationInfo().icon);
-        noticeView.setVisibility(View.GONE);
-        activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        if (notice.getNoticeViewListener() != null) {
-            notice.getNoticeViewListener().onViewCreated(noticeView, notice);
-        }
-
         if (mNoticeViews.indexOfKey(0) < 0) {
-            mNoticeViews.put(0, noticeView);
-        }
+            View noticeView = LayoutInflater.from(activity).inflate(R.layout.layout_notice_view, null, false);
+            TextView title = noticeView.findViewById(R.id.tv_notice_title);
+            setText(title, notice.getTitle());
+            TextView content = noticeView.findViewById(R.id.tv_notice_content);
+            setText(content, notice.getContent());
+            ImageView imageView = noticeView.findViewById(R.id.iv_notice_icon);
+            imageView.setImageResource(activity.getApplicationInfo().icon);
+            noticeView.setVisibility(View.GONE);
+            activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        showNoticeView(noticeView);
+            if (notice.getNoticeViewListener() != null) {
+                notice.getNoticeViewListener().onViewCreated(noticeView, notice);
+            }
+
+            mNoticeViews.put(0, noticeView);
+
+            showNoticeView(noticeView);
+        } else if (mNoticeViews.get(0).getVisibility() == View.GONE) {
+            mNoticeViews.get(0).setVisibility(View.VISIBLE);
+            if (notice.getNoticeViewListener() != null) {
+                notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(0), notice);
+            }
+        } else {
+            mCachedNotices.add(notice);
+        }
     }
 
     void showNoticeView(final View view) {
+        if (mShowAnim.isStarted() || mShowAnim.isRunning()) {
+            return;
+        }
+
         view.measure(View.MeasureSpec.makeMeasureSpec(mScreenWidth, View.MeasureSpec.UNSPECIFIED), View.MeasureSpec.makeMeasureSpec(mScreenHeight, View.MeasureSpec.UNSPECIFIED));
         final int height = view.getMeasuredHeight();
-        mShowAnim = ObjectAnimator.ofFloat(view, "translationY", -height, 0);
-        mShowAnim.setDuration(500);
+        mShowAnim.setTarget(view);
+        mShowAnim.setFloatValues(-height, 0);
+        mShowAnim.removeAllListeners();
         mShowAnim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -100,28 +138,43 @@ class NoticeReceiverImpl implements INoticeReceiver {
             public void onAnimationEnd(Animator animation) {
                 hideNoticeView(view);
             }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
         });
         mShowAnim.start();
     }
 
     void hideNoticeView(final View view) {
+        if (mHideAnim.isStarted() || mHideAnim.isRunning()) {
+            return;
+        }
+
         final int height = view.getMeasuredHeight();
-        mHideAnim = ObjectAnimator.ofFloat(view, "translationY", 0, -height);
-        mHideAnim.setDuration(300);
+        mHideAnim.setTarget(view);
+        mHideAnim.setFloatValues(0, -height);
         mHideAnim.setStartDelay(mResidenceTime);
+        mHideAnim.removeAllListeners();
         mHideAnim.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (view != null && view.getParent() != null) {
-                    ((ViewGroup) view.getParent()).removeView(view);
+                if (view != null) {
+                    view.setVisibility(View.GONE);
                 }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
             }
         });
         mHideAnim.start();
     }
 
     @Override
-    public void refuse() {
+    public void refuse(Activity activity) {
         if (mShowAnim != null && mShowAnim.isStarted()) {
             mShowAnim.cancel();
         }
