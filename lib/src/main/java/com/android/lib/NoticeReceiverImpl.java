@@ -32,7 +32,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
     }
 
     @Override
-    public void accept(Activity activity, INotice notice) {
+    public void showNotice(Activity activity, INotice notice) {
         if (null == notice || null == activity || !activity.getWindow().isActive() || activity.isFinishing()) {
             return;
         }
@@ -156,7 +156,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
     }
 
     @Override
-    public void refuse(Activity activity) {
+    public void hideNotice(Activity activity) {
         if (mShowAnim != null && mShowAnim.isStarted()) {
             mShowAnim.cancel();
         }

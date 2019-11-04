@@ -26,7 +26,7 @@ public abstract class AbstractNoticeReceiver {
         mScreenHeight = metrics.heightPixels;
     }
 
-    public abstract void accept(Activity activity, INotice notice);
+    public abstract void showNotice(Activity activity, INotice notice);
 
-    public abstract void refuse(Activity activity);
+    public abstract void hideNotice(Activity activity);
 }

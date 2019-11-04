@@ -13,20 +13,22 @@ import java.lang.ref.WeakReference;
 /**
  * 通知调度器
  */
-class NoticeDispatcher implements LifecycleObserver {
+class NoticeDispatcher implements LifecycleObserver, IReceiverObservable {
 
     private AbstractNoticeReceiver mReceiver;
     private WeakReference<Activity> mCurrentActivityRef;
 
+    @Override
     public void addNoticeReceiver(@NonNull Activity activity) {
         if (activity != null && activity instanceof LifecycleOwner) {
             ((LifecycleOwner) activity).getLifecycle().addObserver(this);
         }
     }
 
+    @Override
     public void removeNoticeReceiver(@NonNull Activity activity) {
         if (mReceiver != null) {
-            mReceiver.refuse(activity);
+            mReceiver.hideNotice(activity);
         }
 
         if (activity != null && activity instanceof LifecycleOwner) {
@@ -34,6 +36,7 @@ class NoticeDispatcher implements LifecycleObserver {
         }
     }
 
+    @Override
     public void setReceiverVisibility(@NonNull Activity activity, boolean visible) {
         if (visible) {
             mCurrentActivityRef = new WeakReference<>(activity);
@@ -52,7 +55,7 @@ class NoticeDispatcher implements LifecycleObserver {
         }
 
         if (mReceiver != null) {
-            mReceiver.accept(mCurrentActivityRef.get(), notice);
+            mReceiver.showNotice(mCurrentActivityRef.get(), notice);
         }
     }
 

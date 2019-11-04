@@ -1,0 +1,7 @@
+<resources>
+
+    <style name="NoticeWindowAnimation">
+        <item name="android:windowEnterAnimation">@anim/window_enter</item>
+        <item name="android:windowExitAnimation">@anim/window_exit</item>
+    </style>
+</resources>

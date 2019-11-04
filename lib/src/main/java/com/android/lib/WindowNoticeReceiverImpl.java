@@ -9,7 +9,7 @@ import android.view.WindowManager;
 class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
     @Override
-    public void accept(Activity activity, INotice notice) {
+    public void showNotice(Activity activity, INotice notice) {
         WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
 
         final int viewType = notice.getNoticeView().getViewType(notice);
@@ -19,11 +19,12 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
         params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         params.width = WindowManager.LayoutParams.MATCH_PARENT;
         params.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        params.windowAnimations = R.style.NoticeWindowAnimation;
         manager.addView(noticeView, params);
     }
 
     @Override
-    public void refuse(Activity activity) {
+    public void hideNotice(Activity activity) {
         WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
         manager.removeView(null);
     }
