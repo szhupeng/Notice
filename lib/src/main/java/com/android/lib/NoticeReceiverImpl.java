@@ -20,6 +20,8 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
 
     private long mResidenceTime;
 
+    private boolean mShowing;
+
     public NoticeReceiverImpl() {
         super();
         mShowAnim = new ObjectAnimator();
@@ -32,44 +34,53 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
     }
 
     @Override
-    public void showNotice(Activity activity, INotice notice) {
+    public void showNotice(Activity activity, Notice notice) {
         if (null == notice || null == activity || !activity.getWindow().isActive() || activity.isFinishing()) {
             return;
         }
 
+        if (mShowing) {
+            addNotice(notice);
+            return;
+        }
+
+        mShowing = true;
         mResidenceTime = notice.getResidenceTime();
 
-        if (notice.getNoticeView() != null) {
-            final int viewType = notice.getNoticeView().getViewType(notice);
-            if (mNoticeViews.indexOfKey(viewType) < 0) {
-                final View noticeView = notice.getNoticeView().createView(activity, notice, viewType);
-                if (noticeView != null) {
-                    noticeView.setVisibility(View.GONE);
-                    activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                    if (notice.getNoticeViewListener() != null) {
-                        notice.getNoticeViewListener().onViewCreated(noticeView, notice);
-                    }
+        final INoticeView noticeView = notice.getNoticeView();
+        if (null == noticeView) {
+            //如果没有给出自定义通知视图，则使用默认通知视图
+            createDefaultView(activity, notice);
+            return;
+        }
 
-                    mNoticeViews.put(viewType, noticeView);
-
-                    showNoticeView(noticeView);
-                } else {
-                    createDefaultView(activity, notice);
-                }
-            } else if (mNoticeViews.get(viewType).getVisibility() == View.GONE) {
-                mNoticeViews.get(viewType).setVisibility(View.VISIBLE);
+        final int viewType = noticeView.getViewType(notice);
+        if (mNoticeViews.indexOfKey(viewType) < 0) {
+            final View createdNoticeView = notice.getNoticeView().createView(activity, notice, viewType);
+            if (createdNoticeView != null) {
+                createdNoticeView.setVisibility(View.GONE);
+                activity.addContentView(createdNoticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                 if (notice.getNoticeViewListener() != null) {
-                    notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(viewType), notice);
+                    notice.getNoticeViewListener().onViewCreated(createdNoticeView, notice);
                 }
+
+                mNoticeViews.put(viewType, createdNoticeView);
+
+                showNoticeView(createdNoticeView);
             } else {
-                mCachedNotices.add(notice);
+                createDefaultView(activity, notice);
+            }
+        } else if (mNoticeViews.get(viewType).getVisibility() == View.GONE) {
+            mNoticeViews.get(viewType).setVisibility(View.VISIBLE);
+            if (notice.getNoticeViewListener() != null) {
+                notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(viewType), notice);
             }
         } else {
-            createDefaultView(activity, notice);
+            addNotice(notice);
         }
     }
 
-    private void createDefaultView(Activity activity, INotice notice) {
+    private void createDefaultView(Activity activity, Notice notice) {
         if (mNoticeViews.indexOfKey(0) < 0) {
             View noticeView = LayoutInflater.from(activity).inflate(R.layout.layout_notice_view, null, false);
             TextView title = noticeView.findViewById(R.id.tv_notice_title);
@@ -94,7 +105,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                 notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(0), notice);
             }
         } else {
-            mCachedNotices.add(notice);
+            addNotice(notice);
         }
     }
 

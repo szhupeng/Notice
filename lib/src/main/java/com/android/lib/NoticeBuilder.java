@@ -10,7 +10,7 @@ public class NoticeBuilder {
     protected INoticeView mNoticeView;
     protected long mResidenceTime;
     protected TimeUnit mTimeUnit;
-    protected INotice.NoticeViewListener mNoticeViewListener;
+    protected Notice.NoticeViewListener mNoticeViewListener;
     protected boolean mRecycleData;
     protected int mPriority;
 
@@ -46,7 +46,7 @@ public class NoticeBuilder {
         return this;
     }
 
-    public NoticeBuilder setNoticeViewListener(INotice.NoticeViewListener listener) {
+    public NoticeBuilder setNoticeViewListener(Notice.NoticeViewListener listener) {
         this.mNoticeViewListener = listener;
         return this;
     }
@@ -56,8 +56,8 @@ public class NoticeBuilder {
         return this;
     }
 
-    public INotice build() {
-        NoticeInfo info = new NoticeInfo();
+    public Notice build() {
+        Notice info = new Notice();
         info.setIconUrl(mIconUrl);
         info.setIconResId(mIconResId);
         info.setContent(mContent);

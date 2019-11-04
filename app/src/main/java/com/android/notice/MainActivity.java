@@ -6,7 +6,7 @@ import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.lib.INotice;
+import com.android.lib.Notice;
 import com.android.lib.NoticeBuilder;
 import com.android.lib.NoticeManager;
 
@@ -28,9 +28,9 @@ public class MainActivity extends AppCompatActivity {
                 builder.setContent("别点我了，再点我我就弹一个站内信给你看")
                         .setTitle("微信")
                         .setResidenceTime(2, TimeUnit.SECONDS)
-                        .setNoticeViewListener(new INotice.NoticeViewListener() {
+                        .setNoticeViewListener(new Notice.NoticeViewListener() {
                             @Override
-                            public void onViewCreated(View view, INotice notice) {
+                            public void onViewCreated(View view, Notice notice) {
 
                             }
                         });

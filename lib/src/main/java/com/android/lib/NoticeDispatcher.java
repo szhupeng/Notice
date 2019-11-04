@@ -45,7 +45,7 @@ class NoticeDispatcher implements LifecycleObserver, IReceiverObservable {
         }
     }
 
-    public void dispatch(final INotice notice, final ReceiverFactory factory) {
+    public void dispatch(final Notice notice, final ReceiverFactory factory) {
         if (null == mCurrentActivityRef || null == mCurrentActivityRef.get()) {
             return;
         }

@@ -64,7 +64,7 @@ public final class NoticeManager {
      *
      * @param notice
      */
-    public void send(INotice notice) {
+    public void send(Notice notice) {
         send(notice, new NoticeReceiverFactory());
     }
 
@@ -74,7 +74,7 @@ public final class NoticeManager {
      * @param notice
      * @param factory 自定义通知接收者工厂类
      */
-    public void send(INotice notice, ReceiverFactory factory) {
+    public void send(Notice notice, ReceiverFactory factory) {
         mDispatcher.dispatch(notice, factory);
     }
 }

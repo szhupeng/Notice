@@ -9,7 +9,7 @@ import android.view.WindowManager;
 class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
     @Override
-    public void showNotice(Activity activity, INotice notice) {
+    public void showNotice(Activity activity, Notice notice) {
         WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
 
         final int viewType = notice.getNoticeView().getViewType(notice);

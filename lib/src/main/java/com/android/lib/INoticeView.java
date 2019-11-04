@@ -13,7 +13,7 @@ public abstract class INoticeView {
      * @param viewType
      * @return
      */
-    protected abstract View createView(Activity activity, INotice notice, int viewType);
+    protected abstract View createView(Activity activity, Notice notice, int viewType);
 
     /***
      * 获取站内信通知视图类型
@@ -21,7 +21,7 @@ public abstract class INoticeView {
      * @param notice
      * @return 返回值从1开始
      */
-    protected int getViewType(INotice notice) {
+    protected int getViewType(Notice notice) {
         return 1;
     }
 }
