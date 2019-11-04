@@ -8,6 +8,20 @@ import android.view.WindowManager;
 
 class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
+    private static WindowNoticeReceiverImpl sInstance;
+
+    public static WindowNoticeReceiverImpl getInstance() {
+        if (null == sInstance) {
+            sInstance = new WindowNoticeReceiverImpl();
+        }
+
+        return sInstance;
+    }
+
+    private WindowNoticeReceiverImpl() {
+        super();
+    }
+
     @Override
     public void showNotice(Activity activity, Notice notice) {
         WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);

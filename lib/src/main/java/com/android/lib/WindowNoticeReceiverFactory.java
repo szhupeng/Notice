@@ -4,6 +4,6 @@ public class WindowNoticeReceiverFactory implements ReceiverFactory {
 
     @Override
     public AbstractNoticeReceiver create() {
-        return new WindowNoticeReceiverImpl();
+        return WindowNoticeReceiverImpl.getInstance();
     }
 }

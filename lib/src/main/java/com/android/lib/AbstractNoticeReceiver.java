@@ -14,7 +14,7 @@ public abstract class AbstractNoticeReceiver {
 
     protected Notice mReadyNotices;
 
-    public AbstractNoticeReceiver() {
+    protected AbstractNoticeReceiver() {
         mNoticeViews = new SparseArray<>(1);
 
         DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
@@ -46,9 +46,33 @@ public abstract class AbstractNoticeReceiver {
     }
 
     protected Notice getNotice() {
-        final Notice temp = mReadyNotices;
-        mReadyNotices = temp.mNext;
-        temp.mNext = null;
-        return temp;
+        final Notice p = mReadyNotices;
+        mReadyNotices = p.mNext;
+        p.mNext = null;
+        return p;
+    }
+
+    protected Notice getNotice(final int viewType) {
+        Notice p = mReadyNotices;
+        int type = p.getNoticeView().getViewType(p);
+        if (viewType == type) {
+            mReadyNotices = p.mNext;
+            p.mNext = null;
+            return p;
+        }
+
+        Notice prev;
+        for (; ; ) {
+            prev = p;
+            p = p.mNext;
+            type = p.getNoticeView().getViewType(p);
+            if (p != null && viewType == type) {
+                break;
+            }
+        }
+
+        prev.mNext = p.mNext;
+        p.mNext = null;
+        return p;
     }
 }

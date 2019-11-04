@@ -15,15 +15,26 @@ import android.widget.TextView;
 
 class NoticeReceiverImpl extends AbstractNoticeReceiver {
 
+    private static NoticeReceiverImpl sInstance;
+
     private final ObjectAnimator mShowAnim;
     private final ObjectAnimator mHideAnim;
 
     private long mResidenceTime;
-
     private boolean mShowing;
 
-    public NoticeReceiverImpl() {
+    public static NoticeReceiverImpl getInstance() {
+        if (null == sInstance) {
+            sInstance = new NoticeReceiverImpl();
+        }
+
+        return sInstance;
+    }
+
+    private NoticeReceiverImpl() {
         super();
+        mResidenceTime = 3 * 1000;
+
         mShowAnim = new ObjectAnimator();
         mShowAnim.setPropertyName("translationY");
         mShowAnim.setDuration(500);
@@ -44,8 +55,8 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             return;
         }
 
-        mShowing = true;
         mResidenceTime = notice.getResidenceTime();
+        mShowing = true;
 
         final INoticeView noticeView = notice.getNoticeView();
         if (null == noticeView) {
@@ -75,8 +86,6 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             if (notice.getNoticeViewListener() != null) {
                 notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(viewType), notice);
             }
-        } else {
-            addNotice(notice);
         }
     }
 
@@ -104,8 +113,6 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             if (notice.getNoticeViewListener() != null) {
                 notice.getNoticeViewListener().onViewCreated(mNoticeViews.get(0), notice);
             }
-        } else {
-            addNotice(notice);
         }
     }
 
@@ -134,7 +141,6 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
 
             @Override
             public void onAnimationCancel(Animator animation) {
-
             }
         });
         mShowAnim.start();
@@ -156,6 +162,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                 if (view != null) {
                     view.setVisibility(View.GONE);
                 }
+                mShowing = false;
             }
 
             @Override
@@ -164,6 +171,15 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             }
         });
         mHideAnim.start();
+    }
+
+    private boolean showReadyNotice(final int viewType) {
+        final Notice notice = getNotice(viewType);
+        if (notice != null) {
+            mResidenceTime = notice.getResidenceTime();
+        }
+        hideNoticeView(mNoticeViews.get(viewType));
+        return true;
     }
 
     @Override
@@ -175,6 +191,9 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
         if (mHideAnim != null && mHideAnim.isStarted()) {
             mHideAnim.cancel();
         }
+
+        mNoticeViews.clear();
+        mReadyNotices = null;
     }
 
     protected void setText(TextView textView, String text) {

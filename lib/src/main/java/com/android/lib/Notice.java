@@ -13,6 +13,7 @@ public class Notice<T> implements Comparable<Notice<T>> {
     private int mPriority;
     private INoticeView mNoticeView;
     private NoticeViewListener mNoticeViewListener;
+    private int mViewType = 1;
 
     Notice<T> mNext = null;
 
