@@ -14,7 +14,7 @@ public class Notice<T> implements Comparable<Notice<T>> {
     private INoticeView mNoticeView;
     private NoticeViewListener mNoticeViewListener;
 
-    private Notice<T> mNextNotice = null;
+    Notice<T> mNext = null;
 
     /** 获取标题 */
     public String getTitle() {
@@ -100,19 +100,6 @@ public class Notice<T> implements Comparable<Notice<T>> {
 
     public void setNoticeViewListener(NoticeViewListener listener) {
         this.mNoticeViewListener = listener;
-    }
-
-    public void link(Notice<T> notice) {
-        mNextNotice = notice;
-    }
-
-    public Notice<T> unlink() {
-        mNextNotice = null;
-        return this;
-    }
-
-    public Notice<T> next() {
-        return mNextNotice;
     }
 
     @Override

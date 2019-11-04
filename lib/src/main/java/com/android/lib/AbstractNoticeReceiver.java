@@ -12,7 +12,7 @@ public abstract class AbstractNoticeReceiver {
 
     protected final SparseArray<View> mNoticeViews;
 
-    protected Notice mReadyNotice;
+    protected Notice mReadyNotices;
 
     public AbstractNoticeReceiver() {
         mNoticeViews = new SparseArray<>(1);
@@ -27,41 +27,28 @@ public abstract class AbstractNoticeReceiver {
     public abstract void hideNotice(Activity activity);
 
     protected void addNotice(Notice notice) {
-        if (null == mReadyNotice) {
-            mReadyNotice = notice;
-            return;
+        Notice p = mReadyNotices;
+        if (p == null || notice.compareTo(p) < 0) {
+            notice.mNext = p;
+            mReadyNotices = notice;
+        } else {
+            Notice prev;
+            for (; ; ) {
+                prev = p;
+                p = p.mNext;
+                if (p == null || notice.compareTo(p) < 0) {
+                    break;
+                }
+            }
+            notice.mNext = p;
+            prev.mNext = notice;
         }
-
-        Notice last = null;
-        Notice current = mReadyNotice;
-        Notice next = current.next();
-        do {
-            if (notice.compareTo(current) < 0 && null == last) {
-                notice.link(current);
-                mReadyNotice = notice;
-                break;
-            }
-
-            if (notice.compareTo(current) >= 0 && null == next) {
-                current.link(notice);
-                break;
-            }
-
-            if (notice.compareTo(last) >= 0 && notice.compareTo(current) < 0) {
-                notice.link(current);
-                last.link(notice);
-                break;
-            }
-
-            last = current;
-            current = last.next();
-            next = current.next();
-        } while (mReadyNotice.next() != null);
     }
 
     protected Notice getNotice() {
-        final Notice temp = mReadyNotice;
-        mReadyNotice = temp.next();
-        return temp.unlink();
+        final Notice temp = mReadyNotices;
+        mReadyNotices = temp.mNext;
+        temp.mNext = null;
+        return temp;
     }
 }
