@@ -65,7 +65,7 @@ public final class NoticeManager {
      * @param notice
      */
     public void send(Notice notice) {
-        send(notice, new NoticeReceiverFactory());
+        send(notice, new WindowNoticeReceiverFactory());
     }
 
     /**

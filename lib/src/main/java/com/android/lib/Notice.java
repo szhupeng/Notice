@@ -2,6 +2,8 @@ package com.android.lib;
 
 import android.view.View;
 
+import androidx.annotation.NonNull;
+
 public class Notice<T> implements Comparable<Notice<T>> {
 
     private String mTitle;
@@ -11,9 +13,11 @@ public class Notice<T> implements Comparable<Notice<T>> {
     private T mExtendedData;
     private long mResidenceTime;
     private int mPriority;
-    private INoticeView mNoticeView;
-    private NoticeViewListener mNoticeViewListener;
-    private int mViewType = 1;
+
+    private int mViewType = 0;
+    private View mNoticeView;
+    private int mNoticeViewLayoutId;
+    private ViewBinder mViewBinder;
 
     Notice<T> mNext = null;
 
@@ -58,13 +62,21 @@ public class Notice<T> implements Comparable<Notice<T>> {
     }
 
     /** 获取站内信通知自定义视图 */
-    public INoticeView getNoticeView() {
+    public View getNoticeView() {
         return mNoticeView;
     }
 
+    public int getNoticeViewLayoutId() {
+        return mNoticeViewLayoutId;
+    }
+
+    public int getViewType() {
+        return mViewType;
+    }
+
     /** 获取站内通知视图监听 */
-    public NoticeViewListener getNoticeViewListener() {
-        return mNoticeViewListener;
+    public ViewBinder getViewBinder() {
+        return mViewBinder;
     }
 
     public void setTitle(String title) {
@@ -95,12 +107,24 @@ public class Notice<T> implements Comparable<Notice<T>> {
         this.mPriority = priority;
     }
 
-    public void setNoticeView(INoticeView noticeView) {
+    public void setNoticeView(int viewType, View noticeView) {
+        if (noticeView != null && viewType < 1) {
+            throw new RuntimeException("The value of viewType must start from 1");
+        }
+        this.mViewType = viewType;
         this.mNoticeView = noticeView;
     }
 
-    public void setNoticeViewListener(NoticeViewListener listener) {
-        this.mNoticeViewListener = listener;
+    public void setNoticeViewLayoutId(int viewType, int layoutId) {
+        if (layoutId != 0 && viewType < 1) {
+            throw new RuntimeException("The value of viewType must start from 1");
+        }
+        this.mViewType = viewType;
+        this.mNoticeViewLayoutId = layoutId;
+    }
+
+    public void setViewBinder(ViewBinder binder) {
+        this.mViewBinder = binder;
     }
 
     @Override
@@ -108,7 +132,17 @@ public class Notice<T> implements Comparable<Notice<T>> {
         return getPriority() - o.getPriority();
     }
 
-    public interface NoticeViewListener {
-        void onViewCreated(View view, Notice notice);
+    @NonNull
+    @Override
+    public String toString() {
+        if (mNext != null) {
+            return mContent + "\n" + mNext.toString();
+        }
+
+        return mContent;
+    }
+
+    public interface ViewBinder {
+        void bindView(View view, Notice notice);
     }
 }

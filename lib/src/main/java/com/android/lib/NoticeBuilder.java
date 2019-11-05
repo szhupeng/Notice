@@ -1,5 +1,7 @@
 package com.android.lib;
 
+import android.view.View;
+
 import java.util.concurrent.TimeUnit;
 
 public class NoticeBuilder {
@@ -7,12 +9,14 @@ public class NoticeBuilder {
     protected String mIconUrl;
     protected int mIconResId;
     protected String mContent;
-    protected INoticeView mNoticeView;
     protected long mResidenceTime;
     protected TimeUnit mTimeUnit;
-    protected Notice.NoticeViewListener mNoticeViewListener;
-    protected boolean mRecycleData;
     protected int mPriority;
+
+    private int mViewType;
+    protected View mNoticeView;
+    protected int mNoticeViewLayoutId;
+    protected Notice.ViewBinder mViewBinder;
 
     public NoticeBuilder setTitle(String title) {
         this.mTitle = title;
@@ -34,20 +38,9 @@ public class NoticeBuilder {
         return this;
     }
 
-    public NoticeBuilder setNoticeView(INoticeView view) {
-        this.mNoticeView = view;
-        return this;
-    }
-
     public NoticeBuilder setResidenceTime(long residenceTime, TimeUnit timeUnit) {
         this.mResidenceTime = residenceTime;
         this.mTimeUnit = timeUnit;
-
-        return this;
-    }
-
-    public NoticeBuilder setNoticeViewListener(Notice.NoticeViewListener listener) {
-        this.mNoticeViewListener = listener;
         return this;
     }
 
@@ -56,18 +49,36 @@ public class NoticeBuilder {
         return this;
     }
 
+    public NoticeBuilder setNoticeView(int viewType, View view) {
+        this.mViewType = viewType;
+        this.mNoticeView = view;
+        return this;
+    }
+
+    public NoticeBuilder setNoticeView(int viewType, int layoutId) {
+        this.mViewType = viewType;
+        this.mNoticeViewLayoutId = layoutId;
+        return this;
+    }
+
+    public NoticeBuilder setViewBinder(Notice.ViewBinder binder) {
+        this.mViewBinder = binder;
+        return this;
+    }
+
     public Notice build() {
         Notice info = new Notice();
         info.setIconUrl(mIconUrl);
         info.setIconResId(mIconResId);
         info.setContent(mContent);
-        info.setNoticeView(mNoticeView);
         info.setTitle(mTitle);
         if (mResidenceTime > 0 && mTimeUnit != null) {
             info.setResidenceTime(mTimeUnit.toMillis(mResidenceTime));
         }
-        info.setNoticeViewListener(mNoticeViewListener);
+        info.setNoticeView(mViewType, mNoticeView);
+        info.setNoticeViewLayoutId(mViewType, mNoticeViewLayoutId);
         info.setPriority(mPriority);
+        info.setViewBinder(mViewBinder);
         return info;
     }
 }
