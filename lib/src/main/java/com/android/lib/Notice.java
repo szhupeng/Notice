@@ -2,9 +2,10 @@ package com.android.lib;
 
 import android.view.View;
 
-import androidx.annotation.NonNull;
-
 public class Notice<T> implements Comparable<Notice<T>> {
+
+    private Notice() {
+    }
 
     private String mTitle;
     private String mIconUrl;
@@ -21,6 +22,12 @@ public class Notice<T> implements Comparable<Notice<T>> {
     private ViewBinder mViewBinder;
 
     Notice<T> mNext = null;
+
+    /** 回收 */
+    public static final Object sPoolSync = new Object();
+    private static Notice sPool;
+    private static int sPoolSize = 0;
+    private static final int MAX_POOL_SIZE = 50;
 
     /** 获取标题 */
     public String getTitle() {
@@ -142,14 +149,52 @@ public class Notice<T> implements Comparable<Notice<T>> {
         return getPriority() - o.getPriority();
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        if (mNext != null) {
-            return mContent + "\n" + mNext.toString();
+    public static Notice obtain() {
+        synchronized (sPoolSync) {
+            if (sPool != null) {
+                Notice m = sPool;
+                sPool = m.mNext;
+                m.mNext = null;
+                sPoolSize--;
+                return m;
+            }
+        }
+        return new Notice();
+    }
+
+    void recycle() {
+        mTitle = null;
+        mIconUrl = null;
+        mIconResId = 0;
+        mContent = null;
+        mExtendedData = null;
+        mResidenceTime = 0;
+        mPriority = 0;
+        mViewType = 0;
+        mNoticeView = null;
+        mTopMargin = 0;
+        mNoticeViewLayoutId = 0;
+        mViewBinder = null;
+
+        synchronized (sPoolSync) {
+            if (sPoolSize < MAX_POOL_SIZE) {
+                mNext = sPool;
+                sPool = this;
+                sPoolSize++;
+            }
+        }
+    }
+
+    void recycleAll() {
+        Notice p = this;
+        Notice next = p.mNext;
+        while (next != null) {
+            p = next;
+            next = next.mNext;
+            p.recycle();
         }
 
-        return mContent;
+        recycle();
     }
 
     public interface ViewBinder {

@@ -73,7 +73,7 @@ public class NoticeBuilder {
     }
 
     public Notice build() {
-        Notice info = new Notice();
+        Notice info = Notice.obtain();
         info.setIconUrl(mIconUrl);
         info.setIconResId(mIconResId);
         info.setContent(mContent);

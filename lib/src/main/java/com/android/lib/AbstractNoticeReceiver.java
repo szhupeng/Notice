@@ -103,7 +103,11 @@ public abstract class AbstractNoticeReceiver {
     }
 
     protected void dismiss(View view) {
-        mReadyNotices = null;
+        if (mReadyNotices != null) {
+            mReadyNotices.recycleAll();
+            mReadyNotices = null;
+        }
+
         mShowing = false;
         if (view != null) {
             view.setOnTouchListener(null);

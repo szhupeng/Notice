@@ -96,6 +96,8 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             notice.getViewBinder().bindView(noticeView, notice);
         }
 
+        notice.recycle();
+
         setViewEvent(activity, noticeView);
 
         animateShow(activity, viewType);
@@ -220,6 +222,8 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                     if (notice.getViewBinder() != null) {
                         notice.getViewBinder().bindView(noticeView, notice);
                     }
+
+                    notice.recycle();
 
                     showSameTypeNotice(activity, viewType);
                 }
