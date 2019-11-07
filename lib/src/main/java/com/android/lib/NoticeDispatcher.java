@@ -43,6 +43,10 @@ class NoticeDispatcher implements LifecycleObserver, IReceiverObservable {
         } else {
             mCurrentActivityRef.clear();
         }
+
+        if (mReceiver != null) {
+            mReceiver.onVisibilityChanged(activity, visible);
+        }
     }
 
     public void dispatch(final Notice notice, final ReceiverFactory factory) {

@@ -4,11 +4,13 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -40,8 +42,13 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
     }
 
     @Override
-    public void showNotice(Activity activity, Notice notice) {
-        if (null == notice || null == activity || !activity.getWindow().isActive() || activity.isFinishing()) {
+    public void showNotice(Context context, Notice notice) {
+        if (null == notice || null == context || !(context instanceof Activity)) {
+            return;
+        }
+
+        Activity activity = (Activity) context;
+        if (!activity.getWindow().isActive() || activity.isFinishing()) {
             return;
         }
 
@@ -72,7 +79,12 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             mNoticeViews.put(viewType, noticeView);
 
             noticeView.setVisibility(View.GONE);
-            activity.addContentView(noticeView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            activity.addContentView(noticeView, new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) noticeView.getLayoutParams();
+        if (lp.topMargin != notice.getTopMargin()) {
+            lp.setMargins(0, notice.getTopMargin(), 0, 0);
         }
 
         if (0 == viewType) {
@@ -109,16 +121,22 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                     mLastY = event.getY();
                 } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
                     if (mLastY - event.getY() > touchSlop) {
-                        v.setOnTouchListener(null);
-                        if (mHideAnim.isStarted()) {
+                        if (mHideAnim != null) {
                             mHideAnim.cancel();
                         }
-                        animateHide(activity, mNoticeViews.keyAt(mNoticeViews.indexOfValue(v)), true);
+                        animateHide(activity, v, true);
                     }
                 }
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onVisibilityChanged(Context context, boolean visible) {
+        if (!visible) {
+            hideNotice(context);
+        }
     }
 
     void animateShow(final Activity activity, final int viewType) {
@@ -148,12 +166,11 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
         mShowAnim.start();
     }
 
-    void animateHide(final Activity activity, final int viewType, final boolean dismiss) {
+    void animateHide(final Activity activity, final View view, final boolean dismiss) {
         if (mHideAnim.isStarted() || mHideAnim.isRunning()) {
             return;
         }
 
-        final View view = mNoticeViews.get(viewType);
         final int height = view.getMeasuredHeight();
         mHideAnim.setTarget(view);
         mHideAnim.setFloatValues(0, -height);
@@ -167,6 +184,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                 if (!mCanceled) {
                     if (view != null) {
                         view.setVisibility(View.GONE);
+                        view.setOnTouchListener(null);
                     }
 
                     mShowing = false;
@@ -174,7 +192,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                     if (!dismiss) {
                         showReadyNotice(activity);
                     } else {
-                        clearAllNotice();
+                        dismiss(view);
                     }
                 }
             }
@@ -207,7 +225,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
                 }
             }, 2000);
         } else {
-            animateHide(activity, viewType, false);
+            animateHide(activity, mNoticeViews.get(viewType), false);
         }
     }
 
@@ -219,7 +237,7 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
     }
 
     @Override
-    public void hideNotice(Activity activity) {
+    public void hideNotice(Context context) {
         if (mShowAnim != null) {
             mShowAnim.removeAllListeners();
             if (mShowAnim.isStarted()) {
@@ -234,12 +252,17 @@ class NoticeReceiverImpl extends AbstractNoticeReceiver {
             }
         }
 
-        if (mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
+        Activity activity = (Activity) context;
+        ViewGroup parent = activity.findViewById(Window.ID_ANDROID_CONTENT);
+        if (mNoticeViews != null && mNoticeViews.size() > 0) {
+            View view;
+            for (int i = 0; i < mNoticeViews.size(); i++) {
+                view = mNoticeViews.valueAt(i);
+                parent.removeViewInLayout(view);
+            }
         }
 
         mNoticeViews.clear();
-        clearAllNotice();
-        mShowing = false;
+        dismiss(null);
     }
 }

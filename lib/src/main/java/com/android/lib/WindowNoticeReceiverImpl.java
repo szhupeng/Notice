@@ -1,6 +1,5 @@
 package com.android.lib;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -49,8 +48,8 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
     }
 
     @Override
-    public void showNotice(Activity activity, Notice notice) {
-        if (null == notice || null == activity || !activity.getWindow().isActive() || activity.isFinishing()) {
+    public void showNotice(Context context, Notice notice) {
+        if (null == notice || null == context) {
             return;
         }
 
@@ -72,51 +71,49 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
             if (notice.getNoticeView() != null) {
                 noticeView = notice.getNoticeView();
             } else if (notice.getNoticeViewLayoutId() != 0) {
-                noticeView = LayoutInflater.from(activity).inflate(notice.getNoticeViewLayoutId(), null, false);
+                noticeView = LayoutInflater.from(context).inflate(notice.getNoticeViewLayoutId(), null, false);
             } else {
-                noticeView = LayoutInflater.from(activity).inflate(R.layout.layout_notice_view, null, false);
+                noticeView = LayoutInflater.from(context).inflate(R.layout.layout_notice_view, null, false);
             }
 
             mNoticeViews.put(viewType, noticeView);
-
-            noticeView.setFitsSystemWindows(true);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(activity)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + activity.getPackageName()));
-            activity.startActivityForResult(intent, 1);
+                    Uri.parse("package:" + context.getPackageName()));
+            context.startActivity(intent);
             return;
         }
 
-        mParams.y = 40;
-        getWindowManager(activity).addView(noticeView, mParams);
+        mParams.y = notice.getTopMargin();
+        getWindowManager(context).addView(noticeView, mParams);
 
         if (0 == viewType) {
             //默认视图绑定值
-            bindDefaultView(activity, noticeView, notice);
+            bindDefaultView(context, noticeView, notice);
         }
 
         if (notice.getViewBinder() != null) {
             notice.getViewBinder().bindView(noticeView, notice);
         }
 
-        setViewEvent(activity, noticeView);
+        setViewEvent(context.getApplicationContext(), noticeView);
 
-        showSameTypeNotice(activity, viewType);
+        showSameTypeNotice(context.getApplicationContext(), viewType);
     }
 
-    private void bindDefaultView(Activity activity, View noticeView, Notice notice) {
+    private void bindDefaultView(Context context, View noticeView, Notice notice) {
         TextView title = noticeView.findViewById(R.id.tv_notice_title);
         setText(title, notice.getTitle());
         TextView content = noticeView.findViewById(R.id.tv_notice_content);
         setText(content, notice.getContent());
         ImageView imageView = noticeView.findViewById(R.id.iv_notice_icon);
-        imageView.setImageResource(activity.getApplicationInfo().icon);
+        imageView.setImageResource(context.getApplicationInfo().icon);
     }
 
-    private void setViewEvent(final Activity activity, View view) {
-        final int touchSlop = ViewConfiguration.get(activity).getScaledTouchSlop();
+    private void setViewEvent(final Context context, View view) {
+        final int touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         view.setOnTouchListener(new View.OnTouchListener() {
             private float mLastY;
 
@@ -126,8 +123,8 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
                     mLastY = event.getY();
                 } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
                     if (mLastY - event.getY() > touchSlop) {
-                        v.setOnTouchListener(null);
-                        getWindowManager(activity).removeView(v);
+                        dismiss(v);
+                        getWindowManager(context).removeViewImmediate(v);
                     }
                 }
                 return true;
@@ -135,7 +132,7 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
         });
     }
 
-    private void showSameTypeNotice(final Activity activity, final int viewType) {
+    private void showSameTypeNotice(final Context context, final int viewType) {
         final Notice notice = getNotice(viewType);
         if (notice != null) {
             mResidenceTime = notice.getResidenceTime();
@@ -144,49 +141,46 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
                 public void run() {
                     View noticeView = mNoticeViews.get(viewType);
                     if (0 == viewType) {
-                        bindDefaultView(activity, noticeView, notice);
+                        bindDefaultView(context, noticeView, notice);
                     }
 
                     if (notice.getViewBinder() != null) {
                         notice.getViewBinder().bindView(noticeView, notice);
                     }
 
-                    getWindowManager(activity).updateViewLayout(mNoticeViews.get(viewType), mParams);
+                    getWindowManager(context).updateViewLayout(mNoticeViews.get(viewType), mParams);
 
-                    showSameTypeNotice(activity, viewType);
+                    showSameTypeNotice(context, viewType);
                 }
             }, 2000);
         } else {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    getWindowManager(activity).removeView(mNoticeViews.get(viewType));
+                    getWindowManager(context).removeViewImmediate(mNoticeViews.get(viewType));
 
                     mShowing = false;
 
-                    showReadyNotice(activity);
+                    showReadyNotice(context);
                 }
             }, mResidenceTime);
         }
     }
 
-    private void showReadyNotice(final Activity activity) {
+    private void showReadyNotice(final Context context) {
         final Notice p = getNotice();
         if (p != null) {
-            showNotice(activity, p);
+            showNotice(context, p);
         }
     }
 
     @Override
-    public void hideNotice(Activity activity) {
-        if (mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
-        }
+    public void hideNotice(Context context) {
     }
 
-    protected final WindowManager getWindowManager(Activity activity) {
+    protected final WindowManager getWindowManager(Context context) {
         if (null == mWindowManager) {
-            mWindowManager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
+            mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         }
 
         return mWindowManager;

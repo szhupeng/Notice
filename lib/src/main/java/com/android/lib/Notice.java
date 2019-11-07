@@ -16,6 +16,7 @@ public class Notice<T> implements Comparable<Notice<T>> {
 
     private int mViewType = 0;
     private View mNoticeView;
+    private int mTopMargin;
     private int mNoticeViewLayoutId;
     private ViewBinder mViewBinder;
 
@@ -64,6 +65,11 @@ public class Notice<T> implements Comparable<Notice<T>> {
     /** 获取站内信通知自定义视图 */
     public View getNoticeView() {
         return mNoticeView;
+    }
+
+    /** 获取站内信通知顶部外边距 */
+    public int getTopMargin() {
+        return mTopMargin;
     }
 
     public int getNoticeViewLayoutId() {
@@ -121,6 +127,10 @@ public class Notice<T> implements Comparable<Notice<T>> {
         }
         this.mViewType = viewType;
         this.mNoticeViewLayoutId = layoutId;
+    }
+
+    public void setTopMargin(int topMargin) {
+        this.mTopMargin = topMargin;
     }
 
     public void setViewBinder(ViewBinder binder) {

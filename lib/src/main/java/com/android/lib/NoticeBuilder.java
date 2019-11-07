@@ -16,6 +16,7 @@ public class NoticeBuilder {
     private int mViewType;
     protected View mNoticeView;
     protected int mNoticeViewLayoutId;
+    protected int mTopMargin;
     protected Notice.ViewBinder mViewBinder;
 
     public NoticeBuilder setTitle(String title) {
@@ -61,6 +62,11 @@ public class NoticeBuilder {
         return this;
     }
 
+    public NoticeBuilder setTopMargin(int topMargin) {
+        this.mTopMargin = topMargin;
+        return this;
+    }
+
     public NoticeBuilder setViewBinder(Notice.ViewBinder binder) {
         this.mViewBinder = binder;
         return this;
@@ -78,6 +84,7 @@ public class NoticeBuilder {
         info.setNoticeView(mViewType, mNoticeView);
         info.setNoticeViewLayoutId(mViewType, mNoticeViewLayoutId);
         info.setPriority(mPriority);
+        info.setTopMargin(mTopMargin);
         info.setViewBinder(mViewBinder);
         return info;
     }

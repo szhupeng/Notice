@@ -1,6 +1,6 @@
 package com.android.lib;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Handler;
@@ -37,9 +37,12 @@ public abstract class AbstractNoticeReceiver {
         mHandler = new Handler(Looper.getMainLooper());
     }
 
-    public abstract void showNotice(Activity activity, Notice notice);
+    public abstract void showNotice(Context context, Notice notice);
 
-    public abstract void hideNotice(Activity activity);
+    public abstract void hideNotice(Context context);
+
+    public void onVisibilityChanged(Context context, boolean visible) {
+    }
 
     protected void addNotice(Notice notice) {
         Notice p = mReadyNotices;
@@ -99,8 +102,16 @@ public abstract class AbstractNoticeReceiver {
         return p;
     }
 
-    protected void clearAllNotice() {
+    protected void dismiss(View view) {
         mReadyNotices = null;
+        mShowing = false;
+        if (view != null) {
+            view.setOnTouchListener(null);
+        }
+
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
     }
 
     protected void setText(TextView textView, String text) {
