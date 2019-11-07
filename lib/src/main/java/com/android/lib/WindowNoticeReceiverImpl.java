@@ -2,6 +2,11 @@ package com.android.lib;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.PixelFormat;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -15,6 +20,9 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
     private static WindowNoticeReceiverImpl sInstance;
 
+    private final WindowManager.LayoutParams mParams;
+    private WindowManager mWindowManager;
+
     public static WindowNoticeReceiverImpl getInstance() {
         if (null == sInstance) {
             sInstance = new WindowNoticeReceiverImpl();
@@ -25,6 +33,19 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
     private WindowNoticeReceiverImpl() {
         super();
+
+        mParams = new WindowManager.LayoutParams();
+        mParams.gravity = Gravity.CENTER | Gravity.TOP;
+        mParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+        mParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        mParams.format = PixelFormat.TRANSPARENT;
+        mParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+        mParams.windowAnimations = R.style.NoticeWindowAnimation;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            mParams.type = WindowManager.LayoutParams.TYPE_TOAST;
+        }
     }
 
     @Override
@@ -58,15 +79,18 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
 
             mNoticeViews.put(viewType, noticeView);
 
-            WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
-            WindowManager.LayoutParams params = new WindowManager.LayoutParams();
-            params.gravity = Gravity.CENTER | Gravity.TOP;
-            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.WRAP_CONTENT;
-            params.windowAnimations = R.style.NoticeWindowAnimation;
-            manager.addView(noticeView, params);
+            noticeView.setFitsSystemWindows(true);
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(activity)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + activity.getPackageName()));
+            activity.startActivityForResult(intent, 1);
+            return;
+        }
+
+        mParams.y = 40;
+        getWindowManager(activity).addView(noticeView, mParams);
 
         if (0 == viewType) {
             //默认视图绑定值
@@ -103,8 +127,7 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
                 } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
                     if (mLastY - event.getY() > touchSlop) {
                         v.setOnTouchListener(null);
-                        WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
-                        manager.removeView(v);
+                        getWindowManager(activity).removeView(v);
                     }
                 }
                 return true;
@@ -128,6 +151,8 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
                         notice.getViewBinder().bindView(noticeView, notice);
                     }
 
+                    getWindowManager(activity).updateViewLayout(mNoticeViews.get(viewType), mParams);
+
                     showSameTypeNotice(activity, viewType);
                 }
             }, 2000);
@@ -135,8 +160,7 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    WindowManager manager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
-                    manager.removeView(mNoticeViews.get(viewType));
+                    getWindowManager(activity).removeView(mNoticeViews.get(viewType));
 
                     mShowing = false;
 
@@ -158,5 +182,13 @@ class WindowNoticeReceiverImpl extends AbstractNoticeReceiver {
         if (mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
         }
+    }
+
+    protected final WindowManager getWindowManager(Activity activity) {
+        if (null == mWindowManager) {
+            mWindowManager = (WindowManager) activity.getSystemService(Context.WINDOW_SERVICE);
+        }
+
+        return mWindowManager;
     }
 }
