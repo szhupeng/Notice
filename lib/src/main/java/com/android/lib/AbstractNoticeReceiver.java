@@ -47,19 +47,19 @@ public abstract class AbstractNoticeReceiver {
     protected void addNotice(Notice notice) {
         Notice p = mReadyNotices;
         if (null == p || notice.compareTo(p) > 0) {
-            notice.mNext = p;
+            notice.next = p;
             mReadyNotices = notice;
         } else {
             Notice prev;
             for (; ; ) {
                 prev = p;
-                p = p.mNext;
+                p = p.next;
                 if (p == null || notice.compareTo(p) > 0) {
                     break;
                 }
             }
-            notice.mNext = p;
-            prev.mNext = notice;
+            notice.next = p;
+            prev.next = notice;
         }
     }
 
@@ -69,8 +69,8 @@ public abstract class AbstractNoticeReceiver {
         }
 
         final Notice p = mReadyNotices;
-        mReadyNotices = p.mNext;
-        p.mNext = null;
+        mReadyNotices = p.next;
+        p.next = null;
         return p;
     }
 
@@ -82,23 +82,23 @@ public abstract class AbstractNoticeReceiver {
         Notice p = mReadyNotices;
         int type = p.getViewType();
         if (viewType == type) {
-            mReadyNotices = p.mNext;
-            p.mNext = null;
+            mReadyNotices = p.next;
+            p.next = null;
             return p;
         }
 
         Notice prev;
         for (; ; ) {
             prev = p;
-            p = p.mNext;
+            p = p.next;
             type = p.getViewType();
             if (p != null && viewType == type) {
                 break;
             }
         }
 
-        prev.mNext = p.mNext;
-        p.mNext = null;
+        prev.next = p.next;
+        p.next = null;
         return p;
     }
 

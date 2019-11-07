@@ -7,21 +7,21 @@ public class Notice<T> implements Comparable<Notice<T>> {
     private Notice() {
     }
 
-    private String mTitle;
-    private String mIconUrl;
-    private int mIconResId;
-    private String mContent;
-    private T mExtendedData;
-    private long mResidenceTime;
-    private int mPriority;
+    private String title;
+    private String iconUrl;
+    private int iconResId;
+    private String content;
+    private T data;
+    private long residenceTime;
+    private int priority;
 
-    private int mViewType = 0;
-    private View mNoticeView;
-    private int mTopMargin;
-    private int mNoticeViewLayoutId;
-    private ViewBinder mViewBinder;
+    private int viewType = 0;
+    private View noticeView;
+    private int topMargin;
+    private int noticeViewLayoutId;
+    private ViewBinder viewBinder;
 
-    Notice<T> mNext = null;
+    Notice<T> next = null;
 
     /** 回收 */
     public static final Object sPoolSync = new Object();
@@ -31,32 +31,32 @@ public class Notice<T> implements Comparable<Notice<T>> {
 
     /** 获取标题 */
     public String getTitle() {
-        return mTitle;
+        return title;
     }
 
     /** 获取图标链接 */
     public String getIconUrl() {
-        return mIconUrl;
+        return iconUrl;
     }
 
     /** 获取图标资源Id */
     public int getIconResId() {
-        return mIconResId;
+        return iconResId;
     }
 
     /** 获取内容 */
     public String getContent() {
-        return mContent;
+        return content;
     }
 
     /** 扩展数据 */
-    public T getExtendedData() {
-        return mExtendedData;
+    public T getData() {
+        return data;
     }
 
     /** 获取站内信通知停留时间（毫秒） */
     public long getResidenceTime() {
-        return mResidenceTime;
+        return residenceTime;
     }
 
     /**
@@ -66,82 +66,82 @@ public class Notice<T> implements Comparable<Notice<T>> {
      * 优先级高的先展示
      */
     public int getPriority() {
-        return mPriority;
+        return priority;
     }
 
     /** 获取站内信通知自定义视图 */
     public View getNoticeView() {
-        return mNoticeView;
+        return noticeView;
     }
 
     /** 获取站内信通知顶部外边距 */
     public int getTopMargin() {
-        return mTopMargin;
+        return topMargin;
     }
 
     public int getNoticeViewLayoutId() {
-        return mNoticeViewLayoutId;
+        return noticeViewLayoutId;
     }
 
     public int getViewType() {
-        return mViewType;
+        return viewType;
     }
 
     /** 获取站内通知视图监听 */
     public ViewBinder getViewBinder() {
-        return mViewBinder;
+        return viewBinder;
     }
 
     public void setTitle(String title) {
-        this.mTitle = title;
+        this.title = title;
     }
 
     public void setIconUrl(String iconUrl) {
-        this.mIconUrl = iconUrl;
+        this.iconUrl = iconUrl;
     }
 
     public void setIconResId(int iconResId) {
-        this.mIconResId = iconResId;
+        this.iconResId = iconResId;
     }
 
     public void setContent(String content) {
-        this.mContent = content;
+        this.content = content;
     }
 
-    public void setExtendedData(T extendedData) {
-        this.mExtendedData = extendedData;
+    public void setData(T data) {
+        this.data = data;
     }
 
     public void setResidenceTime(long residenceTime) {
-        this.mResidenceTime = residenceTime;
+        this.residenceTime = residenceTime;
     }
 
     public void setPriority(int priority) {
-        this.mPriority = priority;
+        this.priority = priority;
     }
 
     public void setNoticeView(int viewType, View noticeView) {
         if (noticeView != null && viewType < 1) {
             throw new RuntimeException("The value of viewType must start from 1");
         }
-        this.mViewType = viewType;
-        this.mNoticeView = noticeView;
+        this.viewType = viewType;
+        this.noticeView = noticeView;
     }
 
     public void setNoticeViewLayoutId(int viewType, int layoutId) {
         if (layoutId != 0 && viewType < 1) {
             throw new RuntimeException("The value of viewType must start from 1");
         }
-        this.mViewType = viewType;
-        this.mNoticeViewLayoutId = layoutId;
+        this.viewType = viewType;
+        this.noticeViewLayoutId = layoutId;
     }
 
     public void setTopMargin(int topMargin) {
-        this.mTopMargin = topMargin;
+        this.topMargin = topMargin;
     }
 
     public void setViewBinder(ViewBinder binder) {
-        this.mViewBinder = binder;
+        this.viewBinder = binder;
     }
 
     @Override
@@ -153,8 +153,8 @@ public class Notice<T> implements Comparable<Notice<T>> {
         synchronized (sPoolSync) {
             if (sPool != null) {
                 Notice m = sPool;
-                sPool = m.mNext;
-                m.mNext = null;
+                sPool = m.next;
+                m.next = null;
                 sPoolSize--;
                 return m;
             }
@@ -163,22 +163,22 @@ public class Notice<T> implements Comparable<Notice<T>> {
     }
 
     void recycle() {
-        mTitle = null;
-        mIconUrl = null;
-        mIconResId = 0;
-        mContent = null;
-        mExtendedData = null;
-        mResidenceTime = 0;
-        mPriority = 0;
-        mViewType = 0;
-        mNoticeView = null;
-        mTopMargin = 0;
-        mNoticeViewLayoutId = 0;
-        mViewBinder = null;
+        title = null;
+        iconUrl = null;
+        iconResId = 0;
+        content = null;
+        data = null;
+        residenceTime = 0;
+        priority = 0;
+        viewType = 0;
+        noticeView = null;
+        topMargin = 0;
+        noticeViewLayoutId = 0;
+        viewBinder = null;
 
         synchronized (sPoolSync) {
             if (sPoolSize < MAX_POOL_SIZE) {
-                mNext = sPool;
+                next = sPool;
                 sPool = this;
                 sPoolSize++;
             }
@@ -187,10 +187,10 @@ public class Notice<T> implements Comparable<Notice<T>> {
 
     void recycleAll() {
         Notice p = this;
-        Notice next = p.mNext;
+        Notice next = p.next;
         while (next != null) {
             p = next;
-            next = next.mNext;
+            next = next.next;
             p.recycle();
         }
 
